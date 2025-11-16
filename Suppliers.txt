@@ -1,0 +1,94 @@
+show databases;
+
+create database Anil;
+use anil;
+
+create table supplier(
+sid int primary key,
+sname varchar(30),
+city varchar(30)
+);
+
+desc supplier;
+
+insert into supplier values(10001, "Acme widget","Bangalore");
+insert into supplier values(10002, "johns","Kolkata");
+insert into supplier values(10003, "vimal","Mumbai");
+insert into supplier values(10004, "Relience","Delhi");
+
+select * from supplier;
+
+create table parts(
+pid int primary key,
+pname varchar(30),
+colour varchar(30)
+);
+
+desc parts;
+
+insert into parts values(20001, "Book", "Red");
+insert into parts values(20002, "pen", "Red");
+insert into parts values(20003, "Pencil", "Green");
+insert into parts values(20004, "Mobile", "Green");
+insert into parts values(20005, "Charger", "Black");
+
+select * from parts;
+
+create table catalog(
+sid int,
+pid int,
+cost int,
+foreign key(sid) references supplier(sid),
+foreign key(pid) references parts(pid)
+);
+
+desc catalog;
+
+insert into catalog values(10001, 20001, 10);
+insert into catalog values(10001, 20002, 10);
+insert into catalog values(10001, 20003, 30);
+insert into catalog values(10001, 20004, 10);
+insert into catalog values(10001, 20005, 10);
+insert into catalog values(10002, 20001, 10);
+insert into catalog values(10002, 20002, 20);
+insert into catalog values(10003, 20003, 30);
+insert into catalog values(10004, 20003, 40);
+
+select * from catalog;
+
+SELECT DISTINCT p.pname FROM parts p JOIN catalog c ON p.pid = c.pid JOIN supplier s ON c.sid = s.sid;
+
+SELECT s.sname FROM supplier s JOIN catalog c ON s.sid = c.sid GROUP BY s.sid
+HAVING COUNT(DISTINCT c.pid) = (SELECT COUNT(*) FROM parts);
+
+SELECT s.sname FROM supplier s JOIN catalog c ON s.sid = c.sid JOIN parts p ON c.pid = p.pid
+WHERE p.colour = 'Red' GROUP BY s.sid
+HAVING COUNT(DISTINCT c.pid) = (SELECT COUNT(*) FROM parts WHERE colour = 'Red');
+
+SELECT p.pname FROM parts p JOIN catalog c ON p.pid = c.pid WHERE c.sid = 10001 
+AND NOT EXISTS (
+SELECT 1 FROM catalog c2 WHERE c2.pid = p.pid AND c2.sid != 10001  -- Exclude Acme Widget 
+);
+
+SELECT c.sid FROM catalog c
+JOIN (
+    SELECT pid, AVG(cost) AS avg_cost
+    FROM catalog
+    GROUP BY pid
+) avg_costs ON c.pid = avg_costs.pid WHERE c.cost > avg_costs.avg_cost;
+
+
+SELECT s.sname, c.pid, c.cost FROM catalog c JOIN supplier s ON c.sid = s.sid
+WHERE (c.pid, c.cost) IN (
+    SELECT pid, MAX(cost)
+    FROM catalog
+    GROUP BY pid
+);
+
+
+
+
+
+
+ 
+
